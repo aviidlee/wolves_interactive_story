@@ -9,13 +9,28 @@ VAR seen_wolf = false
 VAR killed_wolf = false
 // Whether or not we know that Wolfgnag only have human physical capacity. 
 VAR know_wolf_weak = false
+// You agreed to get wolf enough money to buy land 
+VAR get_money_for_wolf = false
+// You agreed to get wolf a strength upgrade 
+VAR get_wolf_strength = false 
+// You agreed to increase fertilty of townspeople
+VAR increase_fertility = false 
+// You agreed to pretend to have killed the wolf 
+VAR pretend_to_kill = false 
+// Whether you've seen clues in cellar. 
+VAR seen_cellar_clues = true 
 
+// What the wolf says to you when he lets you out. 
+VAR wolf_nda = "You agree, knowing full well that if you forget about this quest for half the game and then come back, he will behave as though no time had passed at all. Wolfgang lets you out and reminds you that by the contract you signed, your life is forfeit if you violate the non-disclosure agreement and tell the townspeople that the free beer is not real."
+-> town 
+
+=== town ===
 The narrow streets are paved with mud, feces, and urine. Thankfully, the scent of pickled sardines and onions fills the air, so that if you closed your eyes and took some magic mushrooms, you might think that you were experiencing severe indigestion after a cheap pub meal. 
 
 You stand before the local notice board, a staple of every fantasy story or game. 
 
-*[Notice boards are put up outside pubs, right? Look for the pub!] -> look_for_pub
-*[Notice board means quest/bounty means money. Take a look at the notice board.] -> notice_board
++ {!seen_wolf} [Notice boards are put up outside pubs, right? Look for the pub!] -> look_for_pub
++[Notice board means quest/bounty means money. Take a look at the notice board.] -> notice_board
 
 === look_for_pub ===
 The local density of drunk people is unnervingly low. You also don't see any vomit puddles. The building in front of which the notice board stands is a non-descript 3-storey brick house with a wooden shingle roof. 
@@ -56,13 +71,51 @@ After translating the poor spelling and grammar to the best of your ability, you
                 The Heap, not the Stack // computer joke :P
     
     + [Read other notices] -> notice_board
-    + Hey, this location is on the quest map. Let's go! -> rann_hq
+    + {!seen_wolf} Hey, this location is on the quest map. Let's go! -> rann_hq
 
 === inside_research_facility ===
 You enter into a long hallway with glass walls. Behind the glass, there are long stainless steel benches filled with glass tubes, cylinders, petri dishes, burettes, and tiny portable fireplaces that you assume function as bunsen burners. The walls are lined with ghastly organic specimens suspended in a liquid which looks difficult to render in real time. 
 
+    -> END
+
 === find_alderman ===
--> END
+You arrive at the only structure in the town with a tower, although it is just as unimpressive as the rest of the buildings. The tower is about 7 storeys tall and is probably used as a lookout, judging by the snoring guard manning it. 
+
+    + {get_money_for_wolf} You plan to steal some money for Wolfgang (and keep some for yourself, of course). -> alderman_basement_window
+    + You enter through the front door. -> alderman_main_entrance
+
+    = alderman_main_entrance
+    An ugly man with a beer gut is smoking a pipe in the shabby hall. You consider informing him of the carcinogenic properties of his habit, but decide against it. 
+    
+    + "I'm looking for the alderman." 
+    
+    - "Well the revered, great, and all-important man called alderman, I be. Great I am, not just becuase the giver of quests I be, but also because the word 'alderman' doth with a certain significance ring."
+        ++ "That's great. Is there anything interesting to do in this town?" 
+        "Thou like a foreigner speakest. What bussiness hast thou in this fabulous town? By convention, of strangers insular folk like us are suspicious."
+            +++ "I'm just passing through." 
+            +++ "Great warrior I am, your problems I solve."
+            --- "If ye must know, there be a fell lupine beast which doth stalk these lands. If ye be brave enough, perhaps this monstrosity to its demise will be brought. There also be a magic place behind the notice board, wherein great things of interest occur." 
+                ++++ {notice_board.bounty}{killed_wolf} "In fact," you say with a puffed chest, taking out the wolf head. -> give_wolf_head
+                ++++ "Tell me more about this wolf." -> ask_about_wolf
+                ++++ "Tell me more about this magic place." -> ask_about_facility
+            
+        ++ {notice_board.bounty}{killed_wolf} [Give the wolf head to the alderman] -> give_wolf_head
+        ++ "I saw the bounty on the wolf. Tell me more about him. Or her." -> ask_about_wolf
+        // option for asking about facility if player has been inside it. 
+        ++ This guy is crazy and you'd rather do something else, so you return to town unceremoniously, fully aware that the AI that runs the alderman isn't sophisticated enough to remember your rude exit. -> town 
+        
+    = ask_about_wolf
+    -> END
+    
+    = ask_about_facility
+    -> END
+    
+    = give_wolf_head 
+    "I come seeking the bounty for the fell beast which has stalked these lands the last few moons," you say in flawless fantasy-speak. You throw the head at the alderman's feet with a perfect dramatic flourish. 
+    
+    = alderman_basement_window 
+    // precondition: you agreed to steal money for Wolfgang. 
+    -> END 
 
 === rann_hq ===
 // Meet the young wolves, possibly get eaten. 
@@ -161,11 +214,11 @@ Much like The Incredible Hulk's infinitely-stretchy underwear, Wolfgang's clothe
             ~ killed_wolf = true
             *** {notice_board.bounty} You cut off his head to show to the alderman, and loot him thoroughly.
                 You find the key to unlock the doors, two gnawed-on ribs and a recipe for doggy biscuits. 
-                **** Go leave to find the alderman -> find_alderman
+                **** Leave to find the alderman -> find_alderman
                 **** You search the rest of the cellar. -> search_cellar
             *** {!notice_board.bounty} You loot him
             and find the key to unlock the doors, two gnawed-on ribs and a recipe for doggy biscuits.
-                **** You go back to town. -> start
+                **** You go back to town. -> town 
                 **** You search the rest of the cellar. -> search_cellar
                 **** This game sucks. What kind of loot is this? You'd rather watch porn. ->END
     ** You feel sorry for the wolf.
@@ -175,16 +228,35 @@ Much like The Incredible Hulk's infinitely-stretchy underwear, Wolfgang's clothe
 
     = negotiate
         "What could you possibly offer me?" -> choices
+        
         = choices
         + {know_wolf_weak} "Maybe I can make you stronger, in exchange for making our contract null and void, and signing a new contract promising not to harm me for the rest of my natural life." // Steal stuff from lab
+            "There is in fact a research facility in town where the notice board is, which I know because it is convenient for the story. You may be able to obtain some upgrades, which by virtue of our fictional setting, can be applied to anyone by anyone."
+            ~ get_wolf_strength = true 
+            {wolf_nda}
+            ++ You return to town. -> town
+            ++ You head straight for said research facility, disappointed that it is not a pub.->inside_research_facility
+            
         * "Money?" 
             Wolfgang scoffed. "How long do you think your petty cash will last me? Do you still not see how my business model works?" -> listen_to_wolf.wolf_business
+            
         * "Umm, lady wolves?" 
             "Don't be absurd," he said angrily. "I'm one of a kind. Doomed to loneliness!"
             ** You offer something else. -> choices
             ** "How could you know that?" -> listen_to_wolf.origin
+            
         + {notice_board.bounty} "I know there's a bounty on you. I could pretend to have caught you, thus freeing you from the trouble of having to kill bounty hunters." 
+            Without hesitation, the wolf cuts off his tail and hands the bloody mess to you.
+            "It grows back, but they don't know that," he says slyly. "I doubt they would find me, but I can let one meal slide for a bit of peace of mind."
+            Wolfgang makes you sign another contract, in which you promise to collect the bounty, and he promises not to kill you. 
+            ~ pretend_to_kill = true
+            {wolf_nda}
+            ++ You go to the alderman. -> find_alderman
+            ++ You return to town. -> town
+            
         + "I don't know, what do you want?" 
+          The wolf contemplates something for a long time, then recounts a sappy life story.
+          -> listen_to_wolf.origin
         
     
 === listen_to_wolf ===
@@ -195,10 +267,10 @@ Much like The Incredible Hulk's infinitely-stretchy underwear, Wolfgang's clothe
     "I post a sign for free beer. Idiots come and sign their lives over to me in a contract, like you did. I trap them in the cellar and I eat them. What else do you think I can do for a living? Nobody teaches humanish wolves a trade. Can't even raise animals here because of the actual wolves. With what I've got going, there's an unlimited supply and no legal issues."
     
         + "Still, eating people... seems wrong." 
-            "Oh yeah? And eating cows, sheep, and chicken isn't? What makes your life any more valuable than mine or anyone else's?" 
+            "Oh yeah? And eating cows, sheep, and chicken isn't? What makes your life any more valuable than mine or anyone else's?" // weave
             
         + "You know how to draw up contracts. Why don't you be a lawyer?" 
-            "Don't have a license," he grunted. "Law school doesn't accept anthropomorphised animals of any kind." 
+            "Don't have a license," he grunted. "Law school doesn't accept anthropomorphised animals of any kind." // weave 
         
         + "Don't you have family? -> origin
         
@@ -210,13 +282,24 @@ Much like The Incredible Hulk's infinitely-stretchy underwear, Wolfgang's clothe
     + You are fulfilled now. You end the game to meditate upon its implications. -> END
     
     = origin 
-    "I had a family once. A mother and a father." Wolfgang put his crossbow away into his invisible pocket and sighed heavily. 
+    "I had a family once. A mother and a father." Wolfgang put his crossbow away into his invisible pocket and sighes heavily. 
     "We scratched out a living in these woods, until my mother stole a red cloak to keep me warm. And even though we had never touched a human at that point, they accused her of eating some girl and her big game hunter grandma. They killed my mother. I wanted vengeance, but my father would have nothing of it. I ran away when I was 15 and I haven't seen him since." 
     
     His eyes glow dangerously again, and you wonder what kind of rendering algorithm they're using. Before his appetite gets the better of him, you decide to offer help. The XP had better be worth this trouble.  
     
     + "Maybe I can find your father." 
+        "That is the LAST thing I want!"
+        -> death // TODO a more interesting solution?
+        
     + "Maybe I can get enough money to buy you a plot of land where you can farm or raise animals," you say without having the faintest idea of what kind of a sum that would be. 
+        // steal money from alderman
+        "Well," says the wolf. "Perhaps you can steal some money from the alderman. He lives in the only structure in town that has a tower. Easy to find. Probably easy to break into."
+        You thank him for the tip and promise upon your honour that you will find him the money. He says honour is overrated and makes you sign an appropriate contract. 
+        ~ get_money_for_wolf = true
+        {wolf_nda}
+        ++ You go to look for the alderman. -> find_alderman
+        ++ You go back to town. -> town
+        
     + "You're right, eating the townspeople seems to be your best business plan. Maybe I can increase their reproduction rate so that you don't run out of food."
         Wolfgang's eyes gleamed. "An excellent proposition."
         "But no eating children," you add anxiously. 
@@ -226,12 +309,32 @@ Much like The Incredible Hulk's infinitely-stretchy underwear, Wolfgang's clothe
         "By Deus Ex Machina, I know that there is a research facility, where the town notice board is. You're bound to find something there." 
         
         You agree, knowing full well that if you forget about this quest for half the game and then come back, he will behave as though no time had passed at all. Wolfgang lets you out and reminds you that by the contract you signed, your life is forfeit if you violate the non-disclosure agreement and tell the townspeople that the free beer is not real.
-        
+        ~ increase_fertility = true
         ++ You go to look for the alderman. -> find_alderman
         ++ You go to the research facility which is sadly not a pub. -> inside_research_facility
-    
+
 === search_cellar ===
--> END
+// precondition: wolf has died without telling his origin story. 
+// You find confusing evidence about the nature of the wolf, which you can further investigate 
+// by going to the research facility. 
+The cellar seems to be full of odd bits and bobs, but thankfully there are no dicernable human remains, presumably to make the game appeal to a larger market. There is a crumpled red cloak, stained with decades-old blood. There are also clippings from news items posted on a notice board. For a bachelor pad, the place is remarkably clean and tidy. 
+    -> examine_items
+    
+    = examine_items 
+    + You examine the cloak.
+        It's a plain cloak, and you surmise that it would fit a 12-year-old girl or an adult male dwarf. The styling suggests the former more strongly. 
+        
+    You examine the clippings. 
+    ~ seen_cellar_clues = true
+            One tells the story of the local big game hunter Nana Wunderbar, who is almost eaten by a vicious talking wolf but manages to save herself and her granddaughter with her formidable archery skill. 
+            
+            Another is about the opening of a research facility headed by Nana Wunderbar. The facility will research everything from acne treatments to cures for the plague, from breeding domestic cattle to fierce war hounds. They don't mention it but you can tell that Nana based her research facility in a town in the middle of nowhere to avoid audits by whatever ethics and safety regulation authorities there are in this world, and possibly also to facilitate tax evasion. Becase you conveniently have a self-updating quest map that always shows you your current location, you realise that this research facility is in fact the building in front of which the notice board stands. 
+    -
+        + {notice_board.bounty} You head off to find the alderman. -> find_alderman
+        + This research facility sounds curious. You head off to investigate it. ->inside_research_facility
+        + You return to town. -> town 
+    
+
 
 
 
